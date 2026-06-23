@@ -6,8 +6,6 @@ include(CMakePrintHelpers)
 include(FetchContent)
 include(GenerateExportHeader)
 
-option(BUILD_QMLNATS "Build the QML NATS plugin (Qt6-only)" OFF)
-
 set(default_build_type "Release")
 
 set(CMAKE_CXX_STANDARD 14)
@@ -15,10 +13,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)  # to find qtnats_export.h
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED)
 # according to https://gitlab.kitware.com/cmake/cmake/-/issues/20843 I need 2 find_package's to detect Qt5/Qt6
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Test Qml Quick REQUIRED)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Test REQUIRED)
 message("Using Qt version ${QT_VERSION}")
+
+# Check if the QT quick and QML components are found
+find_package(Qt_Qml COMPONENTS Qml OPTIONAL)
+find_package(Qt_Quick COMPONENTS Quick OPTIONAL)
+
+if(Qt_Qml_FOUND AND Qt_Quick_FOUND)
+    option(BUILD_QMLNATS "Build the QML NATS plugin (Qt6-only)" OFF)
+endif()
+
 
 # show that we're git-cloning cnats
 set(FETCHCONTENT_QUIET FALSE)
