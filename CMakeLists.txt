@@ -44,7 +44,13 @@ include_directories(${cnats_SOURCE_DIR}/src src)
 file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "src/*.h")
 add_library(qtnats SHARED ${SOURCES} ${HEADERS})
+
 target_link_libraries(qtnats nats_static Qt::Core)
+
+# libnats_static.a needs to link the "ws2_32" library when building on Windows.
+if(WIN32)
+    target_link_libraries(qtnats ws2_32)
+endif()
 
 # this has no effect on Windows due to https://gitlab.kitware.com/cmake/cmake/-/issues/19618
 set_target_properties(qtnats PROPERTIES VERSION 0.1.0 SOVERSION 0.1)
