@@ -17,7 +17,7 @@ Qt5 and Qt6 are supported. You will need [cmake](https://cmake.org) - at least v
 
 You can build the library as follows (assuming your build tree is next to the source folder):
 ```
-cmake -DBUILD_QMLNATS=ON -DCMAKE_BUILD_TYPE=Release -A x64 ../qtnats
+cmake -DCMAKE_BUILD_TYPE=Release -A x64 ../qtnats
 # then build the library using your compiler as usual
 ```
 The library is built as a shared DLL/SO. `cnats` is built as a static library.
@@ -25,7 +25,7 @@ The library is built as a shared DLL/SO. `cnats` is built as a static library.
 Remember to specify an appropriate generator if it is not detected automatically. E.g. when using Visual Studio, running `vcvars64.bat` and `qtenv2.bat` beforehand should take care of this.
 
 `cmake` options:
-- BUILD_QMLNATS: build the QML plugin too; supported only for Qt6 (OFF by default)
+- BUILD_QMLNATS: build the QML plugin too; supported only for Qt6 (OFF by default) when the Qml and Quick modules are found
 
 cmake will automatically clone `cnats` from GitHub, before generating the project.
 
