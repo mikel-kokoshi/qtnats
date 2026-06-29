@@ -7,10 +7,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 #include "qtnats.h"
 #include "qtnats_p.h"
 
-#include <opts.h>
-
 #include <QThread>
 #include <QFutureInterface>
+
+// NATS-c opts.h is not installed by default so we're taking the default values from v3.13.0 and defining them here
+#define NATS_OPTS_DEFAULT_MAX_RECONNECT         (60)
+#define NATS_OPTS_DEFAULT_TIMEOUT               (2 * 1000)          // 2 seconds
+#define NATS_OPTS_DEFAULT_RECONNECT_WAIT        (2 * 1000)          // 2 seconds
+#define NATS_OPTS_DEFAULT_PING_INTERVAL         (2 * 60 * 1000)     // 2 minutes
+#define NATS_OPTS_DEFAULT_MAX_PING_OUT          (2)
+#define NATS_OPTS_DEFAULT_IO_BUF_SIZE           (32 * 1024)         // 32 KB
+#define NATS_OPTS_DEFAULT_MAX_PENDING_MSGS      (65536)             // 65536 messages
+#define NATS_OPTS_DEFAULT_MAX_PENDING_BYTES     (64 * 1024 * 1024)  // 64 MB
+#define NATS_OPTS_DEFAULT_RECONNECT_BUF_SIZE    (8 * 1024 * 1024)   // 8 MB
+#define NATS_OPTS_DEFAULT_RECONNECT_JITTER      (100)               // 100 ms
+#define NATS_OPTS_DEFAULT_RECONNECT_JITTER_TLS  (1000)              // 1 second
 
 using namespace QtNats;
 
@@ -29,7 +40,8 @@ void QtNats::checkError(natsStatus s)
 
 Options::Options()
 {
-    // don't want to include opts.h in qtnats.h
+    // natsOptions AKA struct __natsOptions is a private struct, so we can't just copy its values.
+    // Instead, we define our own defaults based on the NATS-c library's defaults.
     timeout = NATS_OPTS_DEFAULT_TIMEOUT;
     pingInterval = NATS_OPTS_DEFAULT_PING_INTERVAL;
     maxPingsOut = NATS_OPTS_DEFAULT_MAX_PING_OUT;
