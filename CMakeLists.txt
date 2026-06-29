@@ -26,52 +26,83 @@ if(Qt_Qml_FOUND AND Qt_Quick_FOUND)
     option(BUILD_QMLNATS "Build the QML NATS plugin (Qt6-only)" OFF)
 endif()
 
+option(QTNATS_BUILD_LIB_STATIC "Build static QtNats linked with static Nats library" OFF)
+option(QTNATS_BUILD_LIB_SHARED "Build shared QtNats linked with shared Nats library" ON)
+option(QTNATS_BUILD_TESTS "Build test programs" ON)
 
-# show that we're git-cloning cnats
-set(FETCHCONTENT_QUIET FALSE)
-FetchContent_Declare(
-  cnats
-  GIT_REPOSITORY https://github.com/nats-io/nats.c.git
-  GIT_TAG        v3.13.0
-  GIT_SHALLOW    ON
-)
+find_package(cnats PATHS 3.13.0 OPTIONAL "$ENV{cnats_ROOT}")
+if(cnats_FOUND)
+    message(STATUS "Using cnats module from ${cnats_DIR}")
+else()
+    # show that we're git-cloning cnats
+    set(FETCHCONTENT_QUIET FALSE)
+    FetchContent_Declare(
+      cnats
+      GIT_REPOSITORY https://github.com/nats-io/nats.c.git
+      GIT_TAG        v3.13.0
+      GIT_SHALLOW    ON
+    )
 
-set(NATS_BUILD_WITH_TLS OFF)
-set(NATS_BUILD_EXAMPLES OFF)
-set(NATS_BUILD_STREAMING OFF)
-set(NATS_BUILD_LIB_SHARED OFF)
+    set(NATS_UPDATE_VERSION ON)
+    set(NATS_BUILD_WITH_TLS OFF)
+    set(NATS_BUILD_TLS_FORCE_HOST_VERIFY OFF)
+    set(NATS_BUILD_EXAMPLES OFF)
+    set(NATS_BUILD_STREAMING OFF)
+    if (QTNATS_BUILD_LIB_SHARED)
+        set(NATS_BUILD_LIB_SHARED ON)
+    endif()
+    if (QTNATS_BUILD_LIB_STATIC)
+        set(NATS_BUILD_LIB_STATIC ON)
+    endif()
 
-set(BUILD_TESTING OFF)  # do not build cnats tests
+    set(BUILD_TESTING OFF)  # do not build cnats tests
 
-FetchContent_MakeAvailable(cnats)
+    FetchContent_MakeAvailable(cnats)
+endif()
 
 include_directories(${cnats_SOURCE_DIR}/src src)
 
 # ------------- qtnats library ----------------------
 file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "src/*.h")
-add_library(qtnats SHARED ${SOURCES} ${HEADERS})
 
-target_link_libraries(qtnats nats_static Qt::Core)
+if (QTNATS_BUILD_LIB_STATIC)
+    add_library(qtnats_static STATIC ${SOURCES} ${HEADERS})
+    target_sources(qtnats_static PUBLIC FILE_SET headers TYPE HEADERS BASE_DIRS src FILES ${HEADERS})
+    target_include_directories(qtnats_static PRIVATE $<TARGET_PROPERTY:cnats::nats_static,INTERFACE_INCLUDE_DIRECTORIES>)
+    target_link_libraries(qtnats_static cnats::nats_static $<TARGET_PROPERTY:cnats::nats_static,INTERFACE_LINK_LIBRARIES> Qt::Core)
+    # libnats_static.a needs to link the "ws2_32" library when building on Windows.
+    if(WIN32)
+        target_link_libraries(qtnats_static ws2_32)
+    endif()
+    GENERATE_EXPORT_HEADER(qtnats_static BASE_NAME qtnats)
+    set(TARGETS qtnats_static)
+endif()
 
-# libnats_static.a needs to link the "ws2_32" library when building on Windows.
-if(WIN32)
-    target_link_libraries(qtnats ws2_32)
+if (QTNATS_BUILD_LIB_SHARED)
+    add_library(qtnats SHARED ${SOURCES} ${HEADERS})
+    target_sources(qtnats PUBLIC FILE_SET headers TYPE HEADERS BASE_DIRS src FILES ${HEADERS})
+    target_include_directories(qtnats PRIVATE $<TARGET_PROPERTY:cnats::nats,INTERFACE_INCLUDE_DIRECTORIES>)
+    target_link_libraries(qtnats cnats::nats $<TARGET_PROPERTY:cnats::nats,INTERFACE_LINK_LIBRARIES> Qt::Core)
+    GENERATE_EXPORT_HEADER(qtnats)
+    set(TARGETS qtnats ${TARGETS})
 endif()
 
 # this has no effect on Windows due to https://gitlab.kitware.com/cmake/cmake/-/issues/19618
-set_target_properties(qtnats PROPERTIES VERSION 0.1.0 SOVERSION 0.1)
-
-GENERATE_EXPORT_HEADER(qtnats)
+set_target_properties(${TARGETS} PROPERTIES VERSION 0.1.0 SOVERSION 0.1)
+include(GNUInstallDirs)
+install(TARGETS ${TARGETS} FILE_SET headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qtnats)
 
 # ------------- unit tests ----------------------
-add_executable(test_core test/test_core.cpp)
-add_test(NAME test_core COMMAND test_core)
-target_link_libraries(test_core PRIVATE qtnats Qt::Test)
+if(QTNATS_BUILD_TESTS)
+    add_executable(test_core test/test_core.cpp)
+    add_test(NAME test_core COMMAND test_core)
+    target_link_libraries(test_core PRIVATE qtnats Qt::Test)
 
-add_executable(test_jetstream test/test_jetstream.cpp)
-add_test(NAME test_jetstream COMMAND test_jetstream)
-target_link_libraries(test_jetstream PRIVATE qtnats Qt::Test)
+    add_executable(test_jetstream test/test_jetstream.cpp)
+    add_test(NAME test_jetstream COMMAND test_jetstream)
+    target_link_libraries(test_jetstream PRIVATE qtnats Qt::Test)
+endif()
 
 if(BUILD_QMLNATS)
     if(${QT_VERSION_MAJOR} EQUAL 6)
