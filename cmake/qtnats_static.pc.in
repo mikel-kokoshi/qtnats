@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: qtnats_static
+Description: Qt bindings for the NATS messaging system (static)
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lqtnats_static
+Cflags: -I${includedir}/qtnats
+Requires: Qt@QT_VERSION_MAJOR@Core

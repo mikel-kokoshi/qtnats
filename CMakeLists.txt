@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(QtNatsProject)
+project(QtNatsProject VERSION 0.1.0)
 
 include(CMakePrintHelpers)
 include(FetchContent)
 include(GenerateExportHeader)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 set(default_build_type "Release")
 
@@ -76,6 +78,11 @@ if (QTNATS_BUILD_LIB_STATIC)
         target_link_libraries(qtnats_static ws2_32)
     endif()
     GENERATE_EXPORT_HEADER(qtnats_static BASE_NAME qtnats)
+    target_include_directories(qtnats_static PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/qtnats>
+    )
     set(TARGETS qtnats_static)
 endif()
 
@@ -85,13 +92,61 @@ if (QTNATS_BUILD_LIB_SHARED)
     target_include_directories(qtnats PRIVATE $<TARGET_PROPERTY:cnats::nats,INTERFACE_INCLUDE_DIRECTORIES>)
     target_link_libraries(qtnats cnats::nats $<TARGET_PROPERTY:cnats::nats,INTERFACE_LINK_LIBRARIES> Qt::Core)
     GENERATE_EXPORT_HEADER(qtnats)
+    target_include_directories(qtnats PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/qtnats>
+    )
     set(TARGETS qtnats ${TARGETS})
 endif()
 
 # this has no effect on Windows due to https://gitlab.kitware.com/cmake/cmake/-/issues/19618
-set_target_properties(${TARGETS} PROPERTIES VERSION 0.1.0 SOVERSION 0.1)
-include(GNUInstallDirs)
-install(TARGETS ${TARGETS} FILE_SET headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qtnats)
+set_target_properties(${TARGETS} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 0.1)
+
+install(TARGETS ${TARGETS}
+    EXPORT QtNatsTargets
+    FILE_SET headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qtnats
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/qtnats_export.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qtnats
+)
+
+install(EXPORT QtNatsTargets
+    FILE QtNatsTargets.cmake
+    NAMESPACE QtNats::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/QtNats
+)
+
+configure_package_config_file(cmake/QtNatsConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/QtNatsConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/QtNats
+)
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/QtNatsConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/QtNatsConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/QtNatsConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/QtNats
+)
+
+if(QTNATS_BUILD_LIB_SHARED)
+    configure_file(cmake/qtnats.pc.in qtnats.pc @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/qtnats.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    )
+endif()
+if(QTNATS_BUILD_LIB_STATIC)
+    configure_file(cmake/qtnats_static.pc.in qtnats_static.pc @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/qtnats_static.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    )
+endif()
 
 # ------------- unit tests ----------------------
 if(QTNATS_BUILD_TESTS)

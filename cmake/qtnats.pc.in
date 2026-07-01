@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: qtnats
+Description: Qt bindings for the NATS messaging system
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lqtnats
+Cflags: -I${includedir}/qtnats
+Requires: Qt@QT_VERSION_MAJOR@Core
