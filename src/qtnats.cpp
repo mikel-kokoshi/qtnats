@@ -148,6 +148,7 @@ NatsMsgPtr QtNats::toNatsMsg(const Message& msg, const char* reply)
     auto i = msg.headers.constBegin();
     while (i != msg.headers.constEnd()) {
         checkError(natsMsgHeader_Add(cnatsMsg, i.key().constData(), i.value().constData()));
+        ++i;
     }
     return msgPtr;
 }
