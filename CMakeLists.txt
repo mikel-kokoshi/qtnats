@@ -88,10 +88,10 @@ if (QTNATS_BUILD_LIB_STATIC)
     add_library(qtnats_static STATIC ${SOURCES} ${HEADERS})
     target_sources(qtnats_static PUBLIC FILE_SET headers TYPE HEADERS BASE_DIRS src FILES ${HEADERS})
     target_include_directories(qtnats_static PRIVATE $<TARGET_PROPERTY:cnats::nats_static,INTERFACE_INCLUDE_DIRECTORIES>)
-    target_link_libraries(qtnats_static cnats::nats_static $<TARGET_PROPERTY:cnats::nats_static,INTERFACE_LINK_LIBRARIES> Qt::Core)
+    target_link_libraries(qtnats_static PUBLIC cnats::nats_static $<TARGET_PROPERTY:cnats::nats_static,INTERFACE_LINK_LIBRARIES> Qt::Core)
     # libnats_static.a needs to link the "ws2_32" library when building on Windows.
     if(WIN32)
-        target_link_libraries(qtnats_static ws2_32)
+        target_link_libraries(qtnats_static PUBLIC ws2_32)
     endif()
     GENERATE_EXPORT_HEADER(qtnats_static BASE_NAME qtnats)
     target_include_directories(qtnats_static PUBLIC
@@ -106,7 +106,7 @@ if (QTNATS_BUILD_LIB_SHARED)
     add_library(qtnats SHARED ${SOURCES} ${HEADERS})
     target_sources(qtnats PUBLIC FILE_SET headers TYPE HEADERS BASE_DIRS src FILES ${HEADERS})
     target_include_directories(qtnats PRIVATE $<TARGET_PROPERTY:cnats::nats,INTERFACE_INCLUDE_DIRECTORIES>)
-    target_link_libraries(qtnats cnats::nats $<TARGET_PROPERTY:cnats::nats,INTERFACE_LINK_LIBRARIES> Qt::Core)
+    target_link_libraries(qtnats PUBLIC cnats::nats $<TARGET_PROPERTY:cnats::nats,INTERFACE_LINK_LIBRARIES> Qt::Core)
     GENERATE_EXPORT_HEADER(qtnats)
     target_include_directories(qtnats PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
