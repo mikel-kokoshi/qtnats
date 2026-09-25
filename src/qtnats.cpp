@@ -127,31 +127,18 @@ Message::Message(natsMsg* msg) noexcept:
 
 NatsMsgPtr QtNats::toNatsMsg(const Message& msg, const char* reply)
 {
-    natsMsg* cnatsMsg;
-    
-    const char* realReply = nullptr; //in asyncRequest I need to provide my own reply
-    if (reply) {
-        realReply = reply;
-    }
-    else if (msg.reply.size()) {
-        realReply = msg.reply.constData();
-    }
-
+    const char* realReply { reply ? reply : msg.reply.constData() }; //in asyncRequest I need to provide my own reply
+    natsMsg* cnatsMsg { nullptr };
     checkError(natsMsg_Create(&cnatsMsg,
         msg.subject.constData(),
         realReply,
         msg.data.constData(),
         msg.data.size()
     ));
-    
-    NatsMsgPtr msgPtr(cnatsMsg, &natsMsg_Destroy);
+    for (const auto& [key, value] : msg.headers.asKeyValueRange())
+        checkError(natsMsgHeader_Add(cnatsMsg, key.constData(), value.constData()));
 
-    auto i = msg.headers.constBegin();
-    while (i != msg.headers.constEnd()) {
-        checkError(natsMsgHeader_Add(cnatsMsg, i.key().constData(), i.value().constData()));
-        ++i;
-    }
-    return msgPtr;
+    return { cnatsMsg, &natsMsg_Destroy };
 }
 
 void QtNats::subscriptionCallback(natsConnection* /*nc*/, natsSubscription* /*sub*/, natsMsg* msg, void* closure) {
