@@ -1,5 +1,7 @@
 @PACKAGE_INIT@
 
+set(QtNats_GIT_VERSION "@QTNATS_GIT_VERSION@")
+
 include(CMakeFindDependencyMacro)
 find_dependency(Qt@QT_VERSION_MAJOR@ COMPONENTS Core)
 

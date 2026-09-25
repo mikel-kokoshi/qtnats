@@ -2,6 +2,22 @@ cmake_minimum_required(VERSION 3.16)
 
 project(QtNatsProject VERSION 0.1.0)
 
+set(QTNATS_GIT_VERSION "unknown")
+find_package(Git QUIET)
+if(GIT_FOUND)
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" describe --tags --always --dirty
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE QTNATS_GIT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE QTNATS_GIT_RESULT
+    )
+    if(NOT QTNATS_GIT_RESULT EQUAL 0)
+        set(QTNATS_GIT_VERSION "unknown")
+    endif()
+endif()
+
 include(CMakePrintHelpers)
 include(FetchContent)
 include(GenerateExportHeader)
