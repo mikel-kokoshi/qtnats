@@ -60,7 +60,7 @@ static natsOptions* buildNatsOptions(const Options& opts)
     if (opts.servers.size()) {
         QList<QByteArray> l;
         QVector<const char*> ptrs;
-        for (auto url : opts.servers) {
+        for (const auto& url : opts.servers) {
             // TODO check for invalid URL
             l.append(url.toEncoded());
             ptrs.append(l.last().constData());
@@ -78,6 +78,7 @@ static natsOptions* buildNatsOptions(const Options& opts)
     checkError(natsOptions_SetPedantic(o, opts.pedantic));
     checkError(natsOptions_SetPingInterval(o, opts.pingInterval));
     checkError(natsOptions_SetMaxPingsOut(o, opts.maxPingsOut));
+    checkError(natsOptions_SetIOBufSize(0, opts.ioBufferSize));
     checkError(natsOptions_SetAllowReconnect(o, opts.allowReconnect));
     checkError(natsOptions_SetMaxReconnect(o, opts.maxReconnect));
     checkError(natsOptions_SetReconnectWait(o, opts.reconnectWait));
