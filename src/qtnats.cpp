@@ -78,7 +78,7 @@ static natsOptions* buildNatsOptions(const Options& opts)
     checkError(natsOptions_SetPedantic(o, opts.pedantic));
     checkError(natsOptions_SetPingInterval(o, opts.pingInterval));
     checkError(natsOptions_SetMaxPingsOut(o, opts.maxPingsOut));
-    checkError(natsOptions_SetIOBufSize(0, opts.ioBufferSize));
+    checkError(natsOptions_SetIOBufSize(o, opts.ioBufferSize));
     checkError(natsOptions_SetAllowReconnect(o, opts.allowReconnect));
     checkError(natsOptions_SetMaxReconnect(o, opts.maxReconnect));
     checkError(natsOptions_SetReconnectWait(o, opts.reconnectWait));
