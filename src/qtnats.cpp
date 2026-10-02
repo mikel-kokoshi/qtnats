@@ -127,7 +127,7 @@ Message::Message(natsMsg* msg) noexcept:
 
 NatsMsgPtr QtNats::toNatsMsg(const Message& msg, const char* reply)
 {
-    const char* realReply { reply ? reply : msg.reply.constData() }; //in asyncRequest I need to provide my own reply
+    const char* realReply { reply ? reply : (msg.reply.isEmpty() ? nullptr : msg.reply.constData()) }; //in asyncRequest I need to provide my own reply
     natsMsg* cnatsMsg { nullptr };
     checkError(natsMsg_Create(&cnatsMsg,
         msg.subject.constData(),
